@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 10,
     top: 10,
-    backgroundColor: '#D94D6A',
+    backgroundColor: '#e08298',
     borderRadius: 15,
     width: 30,
     height: 30,
@@ -176,6 +176,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
+    lineHeight: 21.5, 
+    textAlign: 'center',
+    width: '100%'
   },
 });
 
