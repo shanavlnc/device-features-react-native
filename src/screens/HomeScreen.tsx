@@ -1,18 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Platform, StatusBar } from 'react-native';
 import { useTheme } from '../utils/theme';
 import { getEntries, removeEntry } from '../utils/storage';
 import { useIsFocused } from '@react-navigation/native';
 
-type TravelEntry = {
-  id: string;
-  imageUri: string;
-  address: string;
-  date: string;
-  note?: string;
-};
-
-const TravelEntryItem = ({ item, onRemove }: { item: TravelEntry; onRemove: (id: string) => void }) => {
+const TravelEntryItem = ({ item, onRemove }: { item: any; onRemove: (id: string) => void }) => {
   const { colors } = useTheme();
   
   return (
@@ -31,7 +23,7 @@ const TravelEntryItem = ({ item, onRemove }: { item: TravelEntry; onRemove: (id:
       </View>
       <TouchableOpacity
         onPress={() => onRemove(item.id)}
-        style={[styles.removeButton, { backgroundColor: colors.primary }]}
+        style={styles.removeButton}
       >
         <Text style={styles.removeButtonText}>×</Text>
       </TouchableOpacity>
@@ -41,7 +33,7 @@ const TravelEntryItem = ({ item, onRemove }: { item: TravelEntry; onRemove: (id:
 
 const HomeScreen = ({ navigation }: { navigation: any }) => {
   const { colors, isDark, toggleTheme } = useTheme();
-  const [entries, setEntries] = useState<TravelEntry[]>([]);
+  const [entries, setEntries] = useState<any[]>([]);
   const isFocused = useIsFocused();
 
   useEffect(() => {
@@ -98,6 +90,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     flexDirection: 'row',
@@ -140,6 +133,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     alignItems: 'center',
     padding: 10,
+    position: 'relative',
   },
   itemImage: {
     width: 80,
@@ -149,6 +143,7 @@ const styles = StyleSheet.create({
   itemDetails: {
     flex: 1,
     padding: 10,
+    marginRight: 40, // Space for remove button
   },
   itemAddress: {
     fontSize: 16,
@@ -165,12 +160,16 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   removeButton: {
-    padding: 8,
-    borderRadius: 20,
-    width: 32,
-    height: 32,
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    backgroundColor: 'red',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 1,
   },
   removeButtonText: {
     color: 'white',

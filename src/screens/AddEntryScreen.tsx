@@ -53,9 +53,10 @@ const AddEntryScreen = () => {
     
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Travel Saved!',
-        body: 'Your travel memory has been saved',
+        title: 'Travel Diary',
+        body: 'New travel entry saved successfully! ✈️',
         sound: 'default',
+        data: { type: 'travel_saved' }, // Optional additional data
       },
       trigger: null,
     });
