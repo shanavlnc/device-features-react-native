@@ -1,30 +1,32 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 
-type AppTheme = {
-  colors: {
-    primary: string;
-    background: string;
-    card: string;
-    text: string;
-    border: string;
-    [key: string]: any; // For other theme properties that might exist
-  };
+// Type for our theme colors
+type AppColors = {
+  primary: string;
+  background: string;
+  card: string;
+  text: string;
+  border: string;
+  [key: string]: any; // For any additional theme properties
 };
 
+// Context type
 type ThemeContextType = {
   isDark: boolean;
   toggleTheme: () => void;
-  colors: AppTheme['colors'];
+  colors: AppColors;
 };
 
+// Create context with default values
 const ThemeContext = createContext<ThemeContextType>({
   isDark: false,
   toggleTheme: () => {},
   colors: DefaultTheme.colors,
 });
 
-const girlyLightColors: AppTheme['colors'] = {
+// Light theme colors
+const girlyLightColors: AppColors = {
   ...DefaultTheme.colors,
   primary: '#FF9EB5',
   background: '#FFF0F5',
@@ -33,7 +35,8 @@ const girlyLightColors: AppTheme['colors'] = {
   border: '#FFB6C1',
 };
 
-const girlyDarkColors: AppTheme['colors'] = {
+// Dark theme colors
+const girlyDarkColors: AppColors = {
   ...DarkTheme.colors,
   primary: '#D94D6A',
   background: '#2D0E14',
@@ -42,14 +45,17 @@ const girlyDarkColors: AppTheme['colors'] = {
   border: '#8B475D',
 };
 
+// Props for ThemeProvider
 interface ThemeProviderProps {
   children: ReactNode;
 }
 
-export const ThemeProvider = ({ children }: ThemeProviderProps): JSX.Element => {
+// ThemeProvider component
+export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const [isDark, setIsDark] = useState(false);
-  const toggleTheme = () => setIsDark(!isDark);
   const colors = isDark ? girlyDarkColors : girlyLightColors;
+
+  const toggleTheme = () => setIsDark(!isDark);
 
   return (
     <ThemeContext.Provider value={{ isDark, toggleTheme, colors }}>
@@ -58,7 +64,8 @@ export const ThemeProvider = ({ children }: ThemeProviderProps): JSX.Element => 
   );
 };
 
-export const useTheme = (): ThemeContextType => {
+// Custom hook to use the theme
+export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');
