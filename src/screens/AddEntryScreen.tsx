@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import { useTheme } from '../utils/theme';
 import { saveEntry } from '../utils/storage';
 import { useNavigation } from '@react-navigation/native';
+import { getDetailedLocation } from '../utils/location';
 
 const AddEntryScreen = () => {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -31,32 +31,13 @@ const AddEntryScreen = () => {
 
     if (!result.canceled) {
       setImageUri(result.assets[0].uri);
-      await getAddressFromLocation();
-    }
-  };
-
-  const getAddressFromLocation = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setError('Location permission is required');
-        return;
+      try {
+        const { address } = await getDetailedLocation();
+        setAddress(address);
+      } catch (err) {
+        setError('Failed to get location');
+        console.error(err);
       }
-
-      const location = await Location.getCurrentPositionAsync({});
-      const addressResult = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-
-      if (addressResult.length > 0) {
-        const addr = addressResult[0];
-        const formattedAddress = `${addr.street || ''}, ${addr.city || ''}, ${addr.region || ''} ${addr.postalCode || ''}`;
-        setAddress(formattedAddress);
-      }
-    } catch (err) {
-      setError('Failed to get location address');
-      console.error(err);
     }
   };
 
@@ -64,7 +45,7 @@ const AddEntryScreen = () => {
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Travel Saved!',
-        body: 'Your travel memory has been saved successfully',
+        body: 'Your travel memory has been saved',
         sound: 'default',
       },
       trigger: null,
@@ -77,13 +58,11 @@ const AddEntryScreen = () => {
       return;
     }
 
-    if (isSaving) return;
-
     setIsSaving(true);
     try {
       const entry = {
         imageUri,
-        address,
+        address: address || 'Location not available',
         date: new Date().toLocaleDateString(),
         note,
       };
@@ -127,9 +106,9 @@ const AddEntryScreen = () => {
         <Image source={{ uri: imageUri }} style={styles.image} />
       )}
 
-      {address ? (
-        <Text style={[styles.address, { color: colors.text }]}>{address}</Text>
-      ) : null}
+      <Text style={[styles.address, { color: colors.text }]}>
+        {address || 'Address will appear here after taking photo'}
+      </Text>
 
       <TextInput
         style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
@@ -156,7 +135,10 @@ const AddEntryScreen = () => {
           <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary, opacity: imageUri ? 1 : 0.5 }]}
+          style={[styles.button, { 
+            backgroundColor: colors.primary,
+            opacity: imageUri ? 1 : 0.5
+          }]}
           onPress={handleSave}
           disabled={!imageUri || isSaving}
         >
