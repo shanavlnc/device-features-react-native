@@ -11,7 +11,7 @@ const TravelEntryItem = ({ item, onRemove }: { item: any; onRemove: (id: string)
     <View style={[styles.itemContainer, { backgroundColor: colors.card }]}>
       <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
       <View style={styles.itemDetails}>
-        <Text style={[styles.itemAddress, { color: colors.text }]}>
+        <Text style={[styles.itemAddress, { color: colors.text }]} numberOfLines={2}>
           {item.address}
         </Text>
         {item.note && (
@@ -23,7 +23,7 @@ const TravelEntryItem = ({ item, onRemove }: { item: any; onRemove: (id: string)
       </View>
       <TouchableOpacity
         onPress={() => onRemove(item.id)}
-        style={styles.removeButton}
+        style={[styles.removeButton, { right: 10, top: 10 }]}
       >
         <Text style={styles.removeButtonText}>×</Text>
       </TouchableOpacity>
@@ -143,12 +143,13 @@ const styles = StyleSheet.create({
   itemDetails: {
     flex: 1,
     padding: 10,
-    marginRight: 40, // Space for remove button
+    marginRight: 10,
   },
   itemAddress: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
+    paddingRight: 30,
   },
   itemNote: {
     fontSize: 14,
