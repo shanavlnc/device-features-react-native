@@ -1,28 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Image, StatusBar, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import { useTheme } from '../utils/theme';
 import { saveEntry } from '../utils/storage';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList, TravelEntry } from '../types';
-
-type AddEntryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AddEntry'>;
 
 const AddEntryScreen = () => {
-  const { colors, toggleTheme, isDark } = useTheme();
-  const navigation = useNavigation<AddEntryScreenNavigationProp>();
+  const { colors, isDark, toggleTheme } = useTheme();
+  const navigation = useNavigation();
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [address, setAddress] = useState('');
-  const [note, setNote] = useState('');
+  const [address, setAddress] = useState<string>('');
+  const [note, setNote] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const takePicture = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') return;
-    
+    if (status !== 'granted') {
+      setError('Camera permission is required');
+      return;
+    }
+
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [4, 3],
@@ -36,44 +36,69 @@ const AddEntryScreen = () => {
   };
 
   const getAddressFromLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return;
-    
-    const location = await Location.getCurrentPositionAsync({});
-    const addressResult = await Location.reverseGeocodeAsync({
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-    });
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError('Location permission is required');
+        return;
+      }
 
-    if (addressResult[0]) {
-      const addr = addressResult[0];
-      setAddress(`${addr.street}, ${addr.city}, ${addr.region} ${addr.postalCode}`);
+      const location = await Location.getCurrentPositionAsync({});
+      const addressResult = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+
+      if (addressResult.length > 0) {
+        const addr = addressResult[0];
+        const formattedAddress = `${addr.street || ''}, ${addr.city || ''}, ${addr.region || ''} ${addr.postalCode || ''}`;
+        setAddress(formattedAddress);
+      }
+    } catch (err) {
+      setError('Failed to get location address');
+      console.error(err);
     }
   };
 
+  const sendNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Travel Saved!',
+        body: 'Your travel memory has been saved successfully',
+        sound: 'default',
+      },
+      trigger: null,
+    });
+  };
+
   const handleSave = async () => {
-    if (!imageUri || isSaving) return;
-    
+    if (!imageUri) {
+      setError('Please take a picture first');
+      return;
+    }
+
+    if (isSaving) return;
+
     setIsSaving(true);
     try {
-      const entry: Omit<TravelEntry, 'id'> = {
+      const entry = {
         imageUri,
         address,
         date: new Date().toLocaleDateString(),
-        note
+        note,
       };
 
       await saveEntry(entry);
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'Entry Saved!',
-          body: 'Your travel memory was saved successfully',
-        },
-        trigger: null,
-      });
-
+      await sendNotification();
+      
+      // Clear form and navigate
+      setImageUri(null);
+      setAddress('');
+      setNote('');
       navigation.goBack();
+    } catch (err) {
+      setError('Failed to save entry');
+      console.error(err);
     } finally {
       setIsSaving(false);
     }
@@ -81,40 +106,57 @@ const AddEntryScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={{ paddingTop: StatusBar.currentHeight, paddingHorizontal: 16 }}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Text style={{ color: colors.primary }}>Cancel</Text>
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>Add Entry</Text>
-          <TouchableOpacity onPress={toggleTheme}>
-            <Text style={{ color: colors.primary }}>{isDark ? '☀️' : '🌙'}</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.imageButton, { backgroundColor: colors.primary }]}
-          onPress={takePicture}
-        >
-          <Text style={styles.buttonText}>
-            {imageUri ? 'Retake Picture' : 'Take Picture'}
-          </Text>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>Add Travel Entry</Text>
+        <TouchableOpacity onPress={toggleTheme} style={styles.themeButton}>
+          <Text style={{ color: colors.primary }}>{isDark ? '☀️' : '🌙'}</Text>
         </TouchableOpacity>
+      </View>
 
-        {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
-        {address && <Text style={[styles.address, { color: colors.text }]}>{address}</Text>}
+      <TouchableOpacity
+        style={[styles.imageButton, { backgroundColor: colors.primary }]}
+        onPress={takePicture}
+        disabled={isSaving}
+      >
+        <Text style={styles.buttonText}>
+          {imageUri ? 'Retake Picture' : 'Take Picture'}
+        </Text>
+      </TouchableOpacity>
 
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
-          placeholder="Add a note..."
-          placeholderTextColor={colors.text}
-          value={note}
-          onChangeText={setNote}
-          multiline
-        />
+      {imageUri && (
+        <Image source={{ uri: imageUri }} style={styles.image} />
+      )}
 
+      {address ? (
+        <Text style={[styles.address, { color: colors.text }]}>{address}</Text>
+      ) : null}
+
+      <TextInput
+        style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
+        placeholder="Add a note..."
+        placeholderTextColor={colors.text}
+        value={note}
+        onChangeText={setNote}
+        multiline
+      />
+
+      {error && <Text style={styles.error}>{error}</Text>}
+
+      <View style={styles.buttonContainer}>
         <TouchableOpacity
-          style={[styles.saveButton, { backgroundColor: colors.primary }]}
+          style={[styles.button, { backgroundColor: '#ccc' }]}
+          onPress={() => {
+            setImageUri(null);
+            setAddress('');
+            setNote('');
+            navigation.goBack();
+          }}
+          disabled={isSaving}
+        >
+          <Text style={styles.buttonText}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: colors.primary, opacity: imageUri ? 1 : 0.5 }]}
           onPress={handleSave}
           disabled={!imageUri || isSaving}
         >
@@ -130,6 +172,7 @@ const AddEntryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 20,
   },
   header: {
     flexDirection: 'row',
@@ -138,8 +181,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
+  },
+  themeButton: {
+    padding: 10,
   },
   imageButton: {
     padding: 15,
@@ -156,6 +202,7 @@ const styles = StyleSheet.create({
   address: {
     marginBottom: 20,
     fontSize: 16,
+    textAlign: 'center',
   },
   input: {
     borderWidth: 1,
@@ -165,14 +212,25 @@ const styles = StyleSheet.create({
     minHeight: 100,
     textAlignVertical: 'top',
   },
-  saveButton: {
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  button: {
+    flex: 1,
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
+    marginHorizontal: 5,
   },
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+  error: {
+    color: 'red',
+    marginBottom: 20,
+    textAlign: 'center',
   },
 });
 

@@ -10,12 +10,21 @@ export default function App() {
   return (
     <ThemeProvider>
       <NavigationContainer>
-        <Stack.Navigator 
-          initialRouteName="Home"
-          screenOptions={{ headerShown: false }}
-        >
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="Add Travel Entry" component={AddEntryScreen} />
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen 
+            name="Home" 
+            component={HomeScreen}
+          />
+          <Stack.Screen 
+            name="AddEntry" 
+            component={AddEntryScreen}
+            options={{ 
+              title: 'New Entry',
+              headerLeft: () => null, // This completely removes the back button
+              headerBackTitleVisible: false,
+              headerShadowVisible: false // Optional: removes the header shadow
+            }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </ThemeProvider>
