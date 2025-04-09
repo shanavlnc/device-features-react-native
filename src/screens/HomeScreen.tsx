@@ -3,15 +3,16 @@ import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Platform, St
 import { useTheme } from '../utils/theme';
 import { getEntries, removeEntry } from '../utils/storage';
 import { useIsFocused } from '@react-navigation/native';
+import { TravelEntry } from '../types';
 
-const TravelEntryItem = ({ item, onRemove }: { item: any; onRemove: (id: string) => void }) => {
+const TravelEntryItem = ({ item, onRemove }: { item: TravelEntry; onRemove: (id: string) => void }) => {
   const { colors } = useTheme();
   
   return (
     <View style={[styles.itemContainer, { backgroundColor: colors.card }]}>
       <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
       <View style={styles.itemDetails}>
-        <Text style={[styles.itemAddress, { color: colors.text }]} numberOfLines={2}>
+        <Text style={[styles.itemAddress, { color: colors.text }]} numberOfLines={1}>
           {item.address}
         </Text>
         {item.note && (
@@ -23,7 +24,8 @@ const TravelEntryItem = ({ item, onRemove }: { item: any; onRemove: (id: string)
       </View>
       <TouchableOpacity
         onPress={() => onRemove(item.id)}
-        style={[styles.removeButton, { right: 10, top: 10 }]}
+        style={styles.removeButton}
+        activeOpacity={0.7}
       >
         <Text style={styles.removeButtonText}>×</Text>
       </TouchableOpacity>
@@ -129,11 +131,11 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     borderRadius: 10,
-    overflow: 'hidden',
     marginBottom: 15,
     alignItems: 'center',
-    padding: 10,
+    padding: 12,
     position: 'relative',
+    overflow: 'hidden',
   },
   itemImage: {
     width: 80,
@@ -142,14 +144,15 @@ const styles = StyleSheet.create({
   },
   itemDetails: {
     flex: 1,
-    padding: 10,
-    marginRight: 10,
+    paddingHorizontal: 12,
+    marginRight: 40,
   },
   itemAddress: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 4,
     paddingRight: 30,
+    flexShrink: 1,
   },
   itemNote: {
     fontSize: 14,
@@ -162,12 +165,13 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     position: 'absolute',
-    right: 10,
-    top: 10,
-    backgroundColor: '#D94D6A',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
+    right: 12,
+    top: '50%',
+    transform: [{ translateY: -16 }],
+    backgroundColor: '#D94D6A', 
+    borderRadius: 16,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
@@ -175,7 +179,10 @@ const styles = StyleSheet.create({
   removeButtonText: {
     color: 'white',
     fontSize: 20,
+    lineHeight: 30, 
     fontWeight: 'bold',
+    textAlign: 'center',
+    width: '100%',
   },
 });
 
