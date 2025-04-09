@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import { useTheme } from '../utils/theme';
 import { saveEntry } from '../utils/storage';
+import { useNavigation } from '@react-navigation/native';
 
-const AddEntryScreen = ({ navigation }: { navigation: any }) => {
+const AddEntryScreen = () => {
   const { colors, isDark, toggleTheme } = useTheme();
+  const navigation = useNavigation();
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [address, setAddress] = useState<string>('');
   const [note, setNote] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const takePicture = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      setError('Camera permission is required to take pictures');
+      setError('Camera permission is required');
       return;
     }
 
@@ -34,11 +36,10 @@ const AddEntryScreen = ({ navigation }: { navigation: any }) => {
   };
 
   const getAddressFromLocation = async () => {
-    setIsLoading(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setError('Location permission is required to get address');
+        setError('Location permission is required');
         return;
       }
 
@@ -56,9 +57,18 @@ const AddEntryScreen = ({ navigation }: { navigation: any }) => {
     } catch (err) {
       setError('Failed to get location address');
       console.error(err);
-    } finally {
-      setIsLoading(false);
     }
+  };
+
+  const sendNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Travel Saved!',
+        body: 'Your travel memory has been saved successfully',
+        sound: 'default',
+      },
+      trigger: null,
+    });
   };
 
   const handleSave = async () => {
@@ -67,6 +77,9 @@ const AddEntryScreen = ({ navigation }: { navigation: any }) => {
       return;
     }
 
+    if (isSaving) return;
+
+    setIsSaving(true);
     try {
       const entry = {
         imageUri,
@@ -76,21 +89,18 @@ const AddEntryScreen = ({ navigation }: { navigation: any }) => {
       };
 
       await saveEntry(entry);
-
-      // Send notification
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'New Travel Entry',
-          body: 'Your travel memory has been saved!',
-          sound: 'default',
-        },
-        trigger: null,
-      });
-
+      await sendNotification();
+      
+      // Clear form and navigate
+      setImageUri(null);
+      setAddress('');
+      setNote('');
       navigation.goBack();
     } catch (err) {
       setError('Failed to save entry');
       console.error(err);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -106,7 +116,7 @@ const AddEntryScreen = ({ navigation }: { navigation: any }) => {
       <TouchableOpacity
         style={[styles.imageButton, { backgroundColor: colors.primary }]}
         onPress={takePicture}
-        disabled={isLoading}
+        disabled={isSaving}
       >
         <Text style={styles.buttonText}>
           {imageUri ? 'Retake Picture' : 'Take Picture'}
@@ -117,9 +127,7 @@ const AddEntryScreen = ({ navigation }: { navigation: any }) => {
         <Image source={{ uri: imageUri }} style={styles.image} />
       )}
 
-      {isLoading ? (
-        <Text style={[styles.loading, { color: colors.text }]}>Getting address...</Text>
-      ) : address ? (
+      {address ? (
         <Text style={[styles.address, { color: colors.text }]}>{address}</Text>
       ) : null}
 
@@ -137,16 +145,24 @@ const AddEntryScreen = ({ navigation }: { navigation: any }) => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.button, { backgroundColor: '#ccc' }]}
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            setImageUri(null);
+            setAddress('');
+            setNote('');
+            navigation.goBack();
+          }}
+          disabled={isSaving}
         >
           <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }]}
+          style={[styles.button, { backgroundColor: colors.primary, opacity: imageUri ? 1 : 0.5 }]}
           onPress={handleSave}
-          disabled={!imageUri || isLoading}
+          disabled={!imageUri || isSaving}
         >
-          <Text style={styles.buttonText}>Save Entry</Text>
+          <Text style={styles.buttonText}>
+            {isSaving ? 'Saving...' : 'Save Entry'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -182,10 +198,6 @@ const styles = StyleSheet.create({
     height: 300,
     borderRadius: 10,
     marginBottom: 20,
-  },
-  loading: {
-    marginBottom: 20,
-    textAlign: 'center',
   },
   address: {
     marginBottom: 20,
