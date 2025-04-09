@@ -11,7 +11,7 @@ const TravelEntryItem = ({ item, onRemove }: { item: any; onRemove: (id: string)
     <View style={[styles.itemContainer, { backgroundColor: colors.card }]}>
       <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
       <View style={styles.itemDetails}>
-        <Text style={[styles.itemAddress, { color: colors.text }]} numberOfLines={1}>
+        <Text style={[styles.itemAddress, { color: colors.text }]}>
           {item.address}
         </Text>
         {item.note && (
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 10,
     top: 10,
-    backgroundColor: 'red',
+    backgroundColor: '#D94D6A',
     borderRadius: 15,
     width: 30,
     height: 30,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   },
   removeButtonText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
 });
