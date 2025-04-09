@@ -1,6 +1,5 @@
 import * as Location from 'expo-location';
 
-// Updated type to match LocationGeocodedAddress exactly
 type AddressComponent = {
   name?: string | null;
   street?: string | null;
@@ -24,7 +23,7 @@ export const formatAddress = (address: AddressComponent): string => {
     address.region,
     address.postalCode,
     address.country
-  ].filter((item): item is string => !!item); // Filters out null/undefined
+  ].filter((item): item is string => !!item);
 
   return components.length > 0 
     ? components.join(', ')
@@ -56,3 +55,4 @@ export const getDetailedLocation = async (): Promise<{
         })
   };
 };
+

@@ -1,10 +1,43 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useTheme } from '../utils/theme';
 import { getEntries, removeEntry } from '../utils/storage';
-import TravelEntryItem from '../components/TravelEntryItem';
 import { useIsFocused } from '@react-navigation/native';
-import { TravelEntry } from '../types';
+
+type TravelEntry = {
+  id: string;
+  imageUri: string;
+  address: string;
+  date: string;
+  note?: string;
+};
+
+const TravelEntryItem = ({ item, onRemove }: { item: TravelEntry; onRemove: (id: string) => void }) => {
+  const { colors } = useTheme();
+  
+  return (
+    <View style={[styles.itemContainer, { backgroundColor: colors.card }]}>
+      <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
+      <View style={styles.itemDetails}>
+        <Text style={[styles.itemAddress, { color: colors.text }]} numberOfLines={1}>
+          {item.address}
+        </Text>
+        {item.note && (
+          <Text style={[styles.itemNote, { color: colors.text }]} numberOfLines={2}>
+            {item.note}
+          </Text>
+        )}
+        <Text style={[styles.itemDate, { color: colors.text }]}>{item.date}</Text>
+      </View>
+      <TouchableOpacity
+        onPress={() => onRemove(item.id)}
+        style={[styles.removeButton, { backgroundColor: colors.primary }]}
+      >
+        <Text style={styles.removeButtonText}>×</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 const HomeScreen = ({ navigation }: { navigation: any }) => {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -30,7 +63,7 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>My Travel Diary</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Travel Diary</Text>
         <TouchableOpacity onPress={toggleTheme} style={styles.themeButton}>
           <Text style={{ color: colors.primary }}>{isDark ? '☀️' : '🌙'}</Text>
         </TouchableOpacity>
@@ -99,6 +132,50 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 20,
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginBottom: 15,
+    alignItems: 'center',
+    padding: 10,
+  },
+  itemImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  itemDetails: {
+    flex: 1,
+    padding: 10,
+  },
+  itemAddress: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  itemNote: {
+    fontSize: 14,
+    opacity: 0.8,
+    marginBottom: 5,
+  },
+  itemDate: {
+    fontSize: 12,
+    opacity: 0.6,
+  },
+  removeButton: {
+    padding: 8,
+    borderRadius: 20,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removeButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

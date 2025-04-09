@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Notifications from 'expo-notifications';
 import { useTheme } from '../utils/theme';
@@ -14,6 +14,7 @@ const AddEntryScreen = () => {
   const [address, setAddress] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const takePicture = async () => {
@@ -31,17 +32,25 @@ const AddEntryScreen = () => {
 
     if (!result.canceled) {
       setImageUri(result.assets[0].uri);
+      setIsLoadingAddress(true);
       try {
         const { address } = await getDetailedLocation();
         setAddress(address);
       } catch (err) {
         setError('Failed to get location');
         console.error(err);
+      } finally {
+        setIsLoadingAddress(false);
       }
     }
   };
 
   const sendNotification = async () => {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') {
+      await Notifications.requestPermissionsAsync();
+    }
+    
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Travel Saved!',
@@ -63,7 +72,11 @@ const AddEntryScreen = () => {
       const entry = {
         imageUri,
         address: address || 'Location not available',
-        date: new Date().toLocaleDateString(),
+        date: new Date().toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        }),
         note,
       };
 
@@ -106,9 +119,16 @@ const AddEntryScreen = () => {
         <Image source={{ uri: imageUri }} style={styles.image} />
       )}
 
-      <Text style={[styles.address, { color: colors.text }]}>
-        {address || 'Address will appear here after taking photo'}
-      </Text>
+      {isLoadingAddress ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.text }]}>Getting address...</Text>
+        </View>
+      ) : (
+        <Text style={[styles.address, { color: colors.text }]}>
+          {address || 'Address will appear here after taking photo'}
+        </Text>
+      )}
 
       <TextInput
         style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
@@ -117,6 +137,7 @@ const AddEntryScreen = () => {
         value={note}
         onChangeText={setNote}
         multiline
+        maxLength={200}
       />
 
       {error && <Text style={styles.error}>{error}</Text>}
@@ -142,9 +163,11 @@ const AddEntryScreen = () => {
           onPress={handleSave}
           disabled={!imageUri || isSaving}
         >
-          <Text style={styles.buttonText}>
-            {isSaving ? 'Saving...' : 'Save Entry'}
-          </Text>
+          {isSaving ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.buttonText}>Save Entry</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
@@ -181,6 +204,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 20,
   },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  loadingText: {
+    marginLeft: 10,
+    fontSize: 16,
+  },
   address: {
     marginBottom: 20,
     fontSize: 16,
@@ -204,6 +237,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginHorizontal: 5,
+    justifyContent: 'center',
+    minHeight: 50,
   },
   buttonText: {
     color: 'white',

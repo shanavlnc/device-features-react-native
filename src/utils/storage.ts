@@ -5,6 +5,7 @@ type TravelEntry = {
   imageUri: string;
   address: string;
   date: string;
+  note?: string;
 };
 
 const STORAGE_KEY = '@TravelDiary/entries';
