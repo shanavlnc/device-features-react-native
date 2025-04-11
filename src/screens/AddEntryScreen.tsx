@@ -97,11 +97,9 @@ const AddEntryScreen = () => {
 
       await saveEntry(entry);
       
-      // Show both notification and toast (you can choose one)
       await sendNotification();
       showToast();
       
-      // Clear form and navigate
       setImageUri(null);
       setAddress('');
       setNote('');
