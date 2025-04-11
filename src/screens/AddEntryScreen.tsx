@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Notifications from 'expo-notifications';
+import Toast from 'react-native-toast-message';
 import { useTheme } from '../utils/theme';
 import { saveEntry } from '../utils/storage';
 import { useNavigation } from '@react-navigation/native';
@@ -46,19 +47,32 @@ const AddEntryScreen = () => {
   };
 
   const sendNotification = async () => {
-    const { status } = await Notifications.getPermissionsAsync();
-    if (status !== 'granted') {
-      await Notifications.requestPermissionsAsync();
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== 'granted') {
+        await Notifications.requestPermissionsAsync();
+      }
+      
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'DailyLife 🩷',
+          body: 'Your memory has been saved successfully!',
+          sound: 'default',
+        },
+        trigger: null,
+      });
+    } catch (err) {
+      console.error('Notification error:', err);
     }
-    
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Travel Diary',
-        body: 'New travel entry saved successfully! ✈️',
-        sound: 'default',
-        data: { type: 'travel_saved' }, // Optional additional data
-      },
-      trigger: null,
+  };
+
+  const showToast = () => {
+    Toast.show({
+      type: 'success',
+      text1: 'Success!',
+      text2: 'Memory saved successfully',
+      position: 'bottom',
+      visibilityTime: 2000,
     });
   };
 
@@ -82,7 +96,10 @@ const AddEntryScreen = () => {
       };
 
       await saveEntry(entry);
+      
+      // Show both notification and toast (you can choose one)
       await sendNotification();
+      showToast();
       
       // Clear form and navigate
       setImageUri(null);
@@ -100,7 +117,7 @@ const AddEntryScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Add Travel Entry</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Add Memory</Text>
         <TouchableOpacity onPress={toggleTheme} style={styles.themeButton}>
           <Text style={{ color: colors.primary }}>{isDark ? '☀️' : '🌙'}</Text>
         </TouchableOpacity>
@@ -132,7 +149,11 @@ const AddEntryScreen = () => {
       )}
 
       <TextInput
-        style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
+        style={[styles.input, { 
+          backgroundColor: colors.card, 
+          color: colors.text,
+          borderColor: colors.border
+        }]}
         placeholder="Add a note..."
         placeholderTextColor={colors.text}
         value={note}
@@ -146,12 +167,7 @@ const AddEntryScreen = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.button, { backgroundColor: '#ccc' }]}
-          onPress={() => {
-            setImageUri(null);
-            setAddress('');
-            setNote('');
-            navigation.goBack();
-          }}
+          onPress={() => navigation.goBack()}
           disabled={isSaving}
         >
           <Text style={styles.buttonText}>Cancel</Text>
@@ -167,10 +183,12 @@ const AddEntryScreen = () => {
           {isSaving ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text style={styles.buttonText}>Save Entry</Text>
+            <Text style={styles.buttonText}>Save Memory</Text>
           )}
         </TouchableOpacity>
       </View>
+      
+      <Toast />
     </View>
   );
 };
