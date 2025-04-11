@@ -7,14 +7,20 @@ import { TravelEntry } from '../types';
 
 const TravelEntryItem = ({ item, onRemove }: { item: TravelEntry; onRemove: (id: string) => void }) => {
   const { colors } = useTheme();
+  const [expanded, setExpanded] = useState(false);
   
   return (
     <View style={[styles.itemContainer, { backgroundColor: colors.card }]}>
       <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
       <View style={styles.itemDetails}>
-        <Text style={[styles.itemAddress, { color: colors.text }]} numberOfLines={2}>
-          {item.address}
-        </Text>
+        <TouchableOpacity onPress={() => setExpanded(!expanded)} activeOpacity={0.8}>
+          <Text 
+            style={[styles.itemAddress, { color: colors.text }]} 
+            numberOfLines={expanded ? undefined : 2}
+          >
+            {item.address}
+          </Text>
+        </TouchableOpacity>
         {item.note && (
           <Text style={[styles.itemNote, { color: colors.text }]} numberOfLines={2}>
             {item.note}
@@ -34,7 +40,7 @@ const TravelEntryItem = ({ item, onRemove }: { item: TravelEntry; onRemove: (id:
 
 const HomeScreen = ({ navigation }: { navigation: any }) => {
   const { colors, isDark, toggleTheme } = useTheme();
-  const [entries, setEntries] = useState<any[]>([]);
+  const [entries, setEntries] = useState<TravelEntry[]>([]);
   const isFocused = useIsFocused();
 
   useEffect(() => {
@@ -91,6 +97,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     flexDirection: 'row',
@@ -149,7 +156,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
-    paddingRight: 30,
+    paddingRight: 40, // Extra space for remove button
   },
   itemNote: {
     fontSize: 14,
@@ -176,9 +183,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
-    lineHeight: 21.5, 
+    lineHeight: 21.5,
     textAlign: 'center',
-    width: '100%'
+    width: '100%',
   },
 });
 
