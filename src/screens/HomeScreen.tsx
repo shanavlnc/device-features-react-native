@@ -10,31 +10,40 @@ const TravelEntryItem = ({ item, onRemove }: { item: TravelEntry; onRemove: (id:
   const [expanded, setExpanded] = useState(false);
   
   return (
-    <View style={[styles.itemContainer, { backgroundColor: colors.card }]}>
+    <TouchableOpacity 
+      onPress={() => setExpanded(!expanded)}
+      activeOpacity={0.8}
+      style={[styles.itemContainer, { 
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: expanded ? colors.primary : 'transparent'
+      }]}
+    >
       <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
       <View style={styles.itemDetails}>
-        <TouchableOpacity onPress={() => setExpanded(!expanded)} activeOpacity={0.8}>
+        <Text style={[styles.itemAddress, { color: colors.text }]}>
+          {item.address}
+        </Text>
+        {item.note && (
           <Text 
-            style={[styles.itemAddress, { color: colors.text }]} 
+            style={[styles.itemNote, { color: colors.text }]} 
             numberOfLines={expanded ? undefined : 2}
           >
-            {item.address}
-          </Text>
-        </TouchableOpacity>
-        {item.note && (
-          <Text style={[styles.itemNote, { color: colors.text }]} numberOfLines={2}>
             {item.note}
           </Text>
         )}
         <Text style={[styles.itemDate, { color: colors.text }]}>{item.date}</Text>
       </View>
       <TouchableOpacity
-        onPress={() => onRemove(item.id)}
+        onPress={(e) => {
+          e.stopPropagation();
+          onRemove(item.id);
+        }}
         style={[styles.removeButton, { right: 10, top: 10 }]}
       >
         <Text style={styles.removeButtonText}>×</Text>
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -87,6 +96,7 @@ const HomeScreen = ({ navigation }: { navigation: any }) => {
             <TravelEntryItem item={item} onRemove={handleRemove} />
           )}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -97,7 +107,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     flexDirection: 'row',
@@ -138,7 +147,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
     marginBottom: 15,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: 10,
     position: 'relative',
   },
@@ -156,12 +165,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 5,
-    paddingRight: 40, // Extra space for remove button
+    paddingRight: 40,
   },
   itemNote: {
     fontSize: 14,
     opacity: 0.8,
     marginBottom: 5,
+    flexShrink: 1,
   },
   itemDate: {
     fontSize: 12,
