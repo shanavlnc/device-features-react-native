@@ -6,7 +6,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import AddEntryScreen from './src/screens/AddEntryScreen';
 import { ThemeProvider } from './src/utils/theme';
 
-// Configure notifications
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -19,7 +19,7 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   useEffect(() => {
-    // Setup notification channel for Android
+
     const setupNotifications = async () => {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'Default',

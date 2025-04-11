@@ -1,31 +1,30 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 
-// Type for our theme colors
 type AppColors = {
   primary: string;
   background: string;
   card: string;
   text: string;
   border: string;
-  [key: string]: any; // For any additional theme properties
+  [key: string]: any; 
 };
 
-// Context type
+// 
 type ThemeContextType = {
   isDark: boolean;
   toggleTheme: () => void;
   colors: AppColors;
 };
 
-// Create context with default values
+// default values
 const ThemeContext = createContext<ThemeContextType>({
   isDark: false,
   toggleTheme: () => {},
   colors: DefaultTheme.colors,
 });
 
-// Light theme colors
+// light theme 
 const girlyLightColors: AppColors = {
   ...DefaultTheme.colors,
   primary: '#FF9EB5',
@@ -35,7 +34,7 @@ const girlyLightColors: AppColors = {
   border: '#FFB6C1',
 };
 
-// Dark theme colors
+// dark theme 
 const girlyDarkColors: AppColors = {
   ...DarkTheme.colors,
   primary: '#D94D6A',
@@ -45,12 +44,12 @@ const girlyDarkColors: AppColors = {
   border: '#8B475D',
 };
 
-// Props for ThemeProvider
+// props
 interface ThemeProviderProps {
   children: ReactNode;
 }
 
-// ThemeProvider component
+// theme provider
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   const [isDark, setIsDark] = useState(false);
   const colors = isDark ? girlyDarkColors : girlyLightColors;
@@ -64,7 +63,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   );
 };
 
-// Custom hook to use the theme
+// 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
